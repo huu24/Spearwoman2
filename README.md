@@ -5,7 +5,7 @@
 - Trường Đại học Công nghệ, Đại học Quốc gia Hà Nội (UET).
 
 1. CÁCH CÀI ĐẶT GAME.
-- Download ZIP về máy và giải nén.
+- Download ZIP về máy và giải nén [tại đây](https://github.com/huu24/Spearwoman2/archive/refs/heads/main.zip).
 - Ấn vào file "huu24game.exe" để chơi.
 
 2. MÔ TẢ TRÒ CHƠI.
