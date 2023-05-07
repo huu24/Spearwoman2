@@ -27,8 +27,6 @@ void Skeleton::set_clips()
                 Idle_clip[i] = {x, 0 , 48*3, 51*3};
                 x += 48*3;
         }
-        SkeletonBox.h = 51*3 / 2;
-        SkeletonBox.w = 48*3 / 2;
         x = 0;
         for(int i = 0; i < WALK_FRAMES; i++)
         {
@@ -60,6 +58,8 @@ void Skeleton::set_clips()
                 x += 48*3;
         }
         x = 0;
+        SkeletonBox.h = 51*3 / 2;
+        SkeletonBox.w = 48*3 / 2;
 }
 
 void Skeleton::CollisionWithMap(Map& map_data)
@@ -161,10 +161,8 @@ void Skeleton::Move(SDL_Rect PlayerBox, SDL_Rect PlayerAttackBox, int camX, int 
                 isWalking = false;
                 return;
         }
-        SkeletonBox.x = x_pos;
-        SkeletonBox.y = y_pos;
 
-        if(PlayerBox.x > SkeletonBox.x)
+        if(PlayerBox.x > x_pos)
         {
                 if(FlipType == SDL_FLIP_HORIZONTAL) FlipType = SDL_FLIP_NONE;
         }
@@ -173,7 +171,7 @@ void Skeleton::Move(SDL_Rect PlayerBox, SDL_Rect PlayerAttackBox, int camX, int 
                 if(FlipType == SDL_FLIP_NONE) FlipType = SDL_FLIP_HORIZONTAL;
         }
 
-        if(SkeletonBox.x <= min_x || SkeletonBox.x >= max_x)
+        if(x_pos <= min_x || x_pos >= max_x)
         {
                 VelX = 0;
         }
@@ -181,7 +179,7 @@ void Skeleton::Move(SDL_Rect PlayerBox, SDL_Rect PlayerAttackBox, int camX, int 
         {
                 if(FlipType == SDL_FLIP_NONE)
                 {
-                        if(SkeletonBox.x  + SkeletonBox.w <= PlayerBox.x)
+                        if(x_pos  + SkeletonBox.w <= PlayerBox.x)
                         {
                                 VelX = DemonSpeed;
                         }
@@ -189,7 +187,7 @@ void Skeleton::Move(SDL_Rect PlayerBox, SDL_Rect PlayerAttackBox, int camX, int 
                 }
                 else
                 {
-                        if(SkeletonBox.x >= PlayerBox.x + PlayerBox.w)
+                        if(x_pos >= PlayerBox.x + PlayerBox.w)
                         {
                                 VelX = -DemonSpeed;
                         }
@@ -200,17 +198,17 @@ void Skeleton::Move(SDL_Rect PlayerBox, SDL_Rect PlayerAttackBox, int camX, int 
                         VelX = 0;
                 }
         }
-        if(SkeletonBox.y <= min_y || SkeletonBox.y >= max_y)
+        if(y_pos <= min_y || y_pos >= max_y)
         {
                 VelY = 0;
         }
         else
         {
-                if(SkeletonBox.y  + SkeletonBox.h < PlayerBox.y + PlayerBox.h)
+                if(y_pos  + SkeletonBox.h < PlayerBox.y + PlayerBox.h)
                 {
                         VelY = DemonSpeed;
                 }
-                else if(SkeletonBox.y  + SkeletonBox.h > PlayerBox.y + PlayerBox.h)
+                else if(y_pos  + SkeletonBox.h > PlayerBox.y + PlayerBox.h)
                 {
                         VelY = - DemonSpeed;
                 }
@@ -226,9 +224,13 @@ void Skeleton::Move(SDL_Rect PlayerBox, SDL_Rect PlayerAttackBox, int camX, int 
         y_pos += VelY;
 }
 
-void Skeleton::Render(SDL_Renderer* screen, SDL_Texture* SkeTexture ,SDL_Rect PlayerBox, SDL_Rect PlayerAttackBox, bool PlayerIsAttack, bool PlayerIsDead, int camX, int camY, Mix_Chunk *skeSound[])
+void Skeleton::Render(SDL_Renderer* screen, SDL_Texture* SkeTexture ,SDL_Rect PlayerBox, SDL_Rect PlayerAttackBox,
+                      bool PlayerIsAttack, bool PlayerIsDead, int camX, int camY, Mix_Chunk *skeSound[], int& killed)
 {
-        if(HP <= 0) isDead = true;
+        if(HP <= 0)
+        {
+                isDead = true;
+        }
 
         SDL_Rect* current_clip;
         int current_frame;
@@ -236,15 +238,13 @@ void Skeleton::Render(SDL_Renderer* screen, SDL_Texture* SkeTexture ,SDL_Rect Pl
         SkeletonBox.x = x_pos;
         SkeletonBox.y = y_pos;
 
-        SkeletonAttackBox.x = x_pos;
-        SkeletonAttackBox.y = y_pos;
-
         if(isDead)
         {
                 current_clip = &Death_clip[death_frame / 10];
                 current_frame = DEATH_FRAMES;
                 if(death_frame == 0)
                 {
+                        killed++;
                         Mix_PlayChannel(-1, skeSound[DEATH_SOUND_], 0);
                 }
                 death_frame++;
@@ -288,6 +288,7 @@ void Skeleton::Render(SDL_Renderer* screen, SDL_Texture* SkeTexture ,SDL_Rect Pl
                 {
                         Mix_PlayChannel(-1, skeSound[ATTACK_SOUND_], 0);
                 }
+                Mix_VolumeChunk(skeSound[ATTACK_SOUND_], 32);
                 if(attack_frame == (current_frame - 1) * 12 && CheckCollision(PlayerBox, SkeletonAttackBox)) isAttacking = true;
                 else isAttacking = false;
                 if(attack_frame >= current_frame * 12)
@@ -307,10 +308,7 @@ void Skeleton::Render(SDL_Renderer* screen, SDL_Texture* SkeTexture ,SDL_Rect Pl
         {
                 current_clip = &Walk_clip[walk_frame / 10];
                 current_frame = WALK_FRAMES;
-//                if(walk_frame == 0)
-//                {
-//                        Mix_PlayChannel(-1, skeSound[WALK_SOUND_], 0);
-//                }
+
                 walk_frame++;
                 if(walk_frame >= current_frame * 10) walk_frame = 0;
                 SkeletonBox.w = current_clip->w / 2;
@@ -486,7 +484,6 @@ SkeletonArmy::SkeletonArmy()
         skeleton.push_back(Skeleton(11*64, 31*64));
         skeleton.push_back(Skeleton(7*64, 35*64));
         skeleton.push_back(Skeleton(7*64, 37*64));
-        skeleton.push_back(Skeleton(10*64, 23*64));
         skeleton.push_back(Skeleton(9*64, 36*64));
         skeleton.push_back(Skeleton(23*64, 33*64));
         skeleton.push_back(Skeleton(25*64, 33*64));
@@ -687,11 +684,12 @@ void SkeletonArmy::Move(SDL_Rect PlayerBox ,SDL_Rect PlayerAttackBox, int camX, 
         }
 }
 
-void SkeletonArmy::Render(SDL_Renderer* screen, SDL_Texture* SkeTexture, SDL_Rect PlayerBox,  SDL_Rect PlayerAttackBox, bool PlayerIsAttack, bool PlayerIsDead, int camX, int camY, Mix_Chunk *skeSound[])
+void SkeletonArmy::Render(SDL_Renderer* screen, SDL_Texture* SkeTexture, SDL_Rect PlayerBox,  SDL_Rect PlayerAttackBox,
+                           bool PlayerIsAttack, bool PlayerIsDead, int camX, int camY, Mix_Chunk *skeSound[], int& killed)
 {
         for(int i = 0; i < (int)skeleton.size(); i++)
         {
-                skeleton[i].Render(screen, SkeTexture,PlayerBox, PlayerAttackBox, PlayerIsAttack, PlayerIsDead, camX, camY, skeSound);
+                skeleton[i].Render(screen, SkeTexture,PlayerBox, PlayerAttackBox, PlayerIsAttack, PlayerIsDead, camX, camY, skeSound, killed);
         }
 }
 void SkeletonArmy::RenderHP(SDL_Renderer* screen, SDL_Texture* SkeletonTexture, int camX, int camY)

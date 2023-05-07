@@ -3,16 +3,15 @@
 Player::Player()
 {
         HP = 5;
-        ENERGY = 3;
-        KEYS = 5;
+        KEYS = 0;
         attack1_frame = attack2_frame = idle_frame = takehit_frame = run_frame = death_frame = 0;
         VelX = VelY = 0.0;
-//        xPos = 232 * TILE_SIZE;
+//        xPos = 240 * TILE_SIZE;
+//        yPos = 200;
         xPos = 0.0;
         yPos = 1300.0;
         camX = camY = 0;
-        input_type.left = input_type.right = input_type.up = input_type.down = input_type.attack1 = input_type.attack2 = input_type.take_hit
-        = input_type.death = isAttacking  = isWalking = isAttacked = dead = false;
+        input_type.left = input_type.right = input_type.up = input_type.down = input_type.attack1 = input_type.attack2 =  isAttacking  = isWalking = isAttacked = dead = false;
         FlipType = SDL_FLIP_NONE;
         PlayerAttackBox.w = PlayerAttackBox.h = 0;
 }
@@ -67,14 +66,6 @@ void Player::set_clips()
                 x += 49*8;
         }
         x = 0;
-        for(int i = 0; i < 4; i++)
-        {
-                Energy_clip[i] = {x, 356*8, 48*8, 9*8};
-                x += 48*8;
-        }
-        x = 0;
-        PlayerBox.h = 96;
-        PlayerBox.w = 64;
         int w = 0;
         for(int i = 0; i <= 5; i++)
         {
@@ -82,6 +73,8 @@ void Player::set_clips()
                 w += 32;
         }
         w = 0;
+        PlayerBox.h = 96;
+        PlayerBox.w = 64;
 }
 
 void Player::Handle(SDL_Event events, int& state, Mix_Chunk *playerSound[])
@@ -90,20 +83,20 @@ void Player::Handle(SDL_Event events, int& state, Mix_Chunk *playerSound[])
         {
                 switch(events.key.keysym.sym)
                 {
-                case SDLK_RIGHT:
+                case SDLK_d:
                         input_type.right = true;
                         input_type.left = false;
                         FlipType = SDL_FLIP_NONE;
                         break;
-                case SDLK_LEFT:
+                case SDLK_a:
                         input_type.left = true;
                         input_type.right = false;
                         FlipType = SDL_FLIP_HORIZONTAL;
                         break;
-                case SDLK_UP:
+                case SDLK_w:
                         input_type.up = true;
                         break;
-                case SDLK_DOWN:
+                case SDLK_s:
                         input_type.down = true;
                         break;
                 case SDLK_k:
@@ -122,16 +115,16 @@ void Player::Handle(SDL_Event events, int& state, Mix_Chunk *playerSound[])
         {
                 switch(events.key.keysym.sym)
                 {
-                case SDLK_RIGHT:
+                case SDLK_d:
                         input_type.right = false;
                         break;
-                case SDLK_LEFT:
+                case SDLK_a:
                         input_type.left = false;
                         break;
-                case SDLK_UP:
+                case SDLK_w:
                         input_type.up = false;
                         break;
-                case SDLK_DOWN:
+                case SDLK_s:
                         input_type.down = false;
                         break;
                 }
@@ -349,7 +342,6 @@ void Player::RenderPlayer(SDL_Renderer* screen, SDL_Texture* mPlayerTexture, boo
                 {
                         Mix_PlayChannel(-1, playerSound[ATTACK_SOUND], 0);
                         isAttacking = true;
-                        --ENERGY;
                 }
                 else isAttacking = false;
                 if(attack1_frame >= current_frame * 10)
@@ -371,10 +363,13 @@ void Player::RenderPlayer(SDL_Renderer* screen, SDL_Texture* mPlayerTexture, boo
                 PlayerAttackBox.h = current_clip->h / 4;
 
                 attack2_frame++;
-                if(attack2_frame == 1 || attack2_frame == 6)
+                if(attack2_frame == 10)
+                {
+                        Mix_PlayChannel(-1, playerSound[ATTACK_SOUND], 1);
+                }
+                if(attack2_frame == 1 * 10|| attack2_frame == 3 * 10)
                 {
                         isAttacking = true;
-                        --ENERGY;
                 }
                 else isAttacking = false;
 
@@ -394,11 +389,6 @@ void Player::RenderPlayer(SDL_Renderer* screen, SDL_Texture* mPlayerTexture, boo
 
                 PlayerBox.w = current_clip->w / 4;
                 PlayerBox.h = current_clip->h / 4;
-
-                if(run_frame == 0 || run_frame == 4 * 10)
-                {
-                        Mix_PlayChannel(-1, playerSound[WALK_SOUND], 0);
-                }
                 run_frame++;
                 if(run_frame >= current_frame * 10) run_frame = 0;
 
@@ -422,23 +412,14 @@ void Player::RenderPlayer(SDL_Renderer* screen, SDL_Texture* mPlayerTexture, boo
         }
 }
 
-void Player::RenderHP(SDL_Renderer* screen, SDL_Texture* mPlayerTexture)
+void Player::RenderHPAndKeys(SDL_Renderer* screen, SDL_Texture* mPlayerTexture)
 {
         if(dead) return;
-        if(ENERGY <= 0)
-        {
-                ENERGY = 0;
-        }
 
                 SDL_Rect* current_clip;
                 current_clip = &HP_clip[HP];
-                SDL_Rect renderQuad = {10, 10, current_clip->w * 2 / 3, current_clip->h * 2 / 3};
+                SDL_Rect renderQuad = {20, 10, current_clip->w * 2 / 3, current_clip->h * 2 / 3};
                 SDL_RenderCopyEx(screen, mPlayerTexture, current_clip, &renderQuad, 0.0, NULL, SDL_FLIP_NONE);
-
-                SDL_Rect* current_clip1;
-                current_clip1 = &Energy_clip[ENERGY];
-                SDL_Rect renderQuad1 = {10, 50, 480 / 2, 90 / 2};
-                SDL_RenderCopyEx(screen, mPlayerTexture, current_clip1, &renderQuad1, 0.0, NULL, SDL_FLIP_NONE);
 
                 SDL_Rect* current_clip2;
                 current_clip2 = &Key_clip[KEYS];
